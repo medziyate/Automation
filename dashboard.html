@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — PsychoFaits Content Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0a1a; color: #e0d6f2; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #1a1229; border-right: 1px solid rgba(192,132,252,0.1); padding: 1.5rem; display: flex; flex-direction: column; }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; font-weight: 700; color: #c084fc; font-size: 1rem; }
+        .sidebar-logo span { font-size: 1.4rem; }
+        .nav-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #4a3f6b; margin: 1.2rem 0 0.6rem; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; color: #8b7faa; font-size: 0.9rem; text-decoration: none; margin-bottom: 2px; transition: all 0.15s; cursor: pointer; }
+        .nav-item:hover { background: rgba(192,132,252,0.08); color: #c084fc; }
+        .nav-item.active { background: rgba(192,132,252,0.12); color: #c084fc; }
+        .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+        .sidebar-bottom { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(192,132,252,0.1); }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #c084fc, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+        .user-name { font-size: 0.85rem; color: #a89bc2; }
+        .user-handle { font-size: 0.75rem; color: #5a4f7b; }
+
+        /* Main */
+        .main { margin-left: 240px; padding: 2rem; }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.5rem; color: #e0d6f2; }
+        .header-actions { display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+        .btn-primary { background: #c084fc; color: #0f0a1a; }
+        .btn-primary:hover { background: #a855f7; }
+        .btn-secondary { background: rgba(192,132,252,0.1); color: #c084fc; border: 1px solid rgba(192,132,252,0.2); }
+
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: #1a1229; border: 1px solid rgba(192,132,252,0.1); border-radius: 12px; padding: 1.25rem; }
+        .stat-label { font-size: 0.8rem; color: #5a4f7b; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: #e0d6f2; }
+        .stat-change { font-size: 0.8rem; margin-top: 0.3rem; }
+        .stat-up { color: #22c55e; }
+        .stat-neutral { color: #8b7faa; }
+
+        /* Content Grid */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .section-header h2 { font-size: 1.15rem; color: #e0d6f2; }
+        .tab-group { display: flex; gap: 4px; background: rgba(192,132,252,0.06); border-radius: 8px; padding: 3px; }
+        .tab { padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; color: #8b7faa; cursor: pointer; border: none; background: none; }
+        .tab.active { background: rgba(192,132,252,0.15); color: #c084fc; }
+
+        /* Pipeline Table */
+        .pipeline-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+        .pipeline-table th { text-align: left; padding: 10px 14px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #4a3f6b; border-bottom: 1px solid rgba(192,132,252,0.08); }
+        .pipeline-table td { padding: 14px; border-bottom: 1px solid rgba(192,132,252,0.05); font-size: 0.9rem; }
+        .pipeline-table tr:hover { background: rgba(192,132,252,0.03); }
+
+        /* Status badges */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-published { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .badge-ready { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .badge-producing { background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .badge-scripted { background: rgba(192,132,252,0.12); color: #c084fc; }
+        .badge-idea { background: rgba(107,114,128,0.12); color: #6b7280; }
+
+        /* Pillar badges */
+        .pillar { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+        .pillar-biais { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .pillar-sociale { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .pillar-sombre { background: rgba(107,33,168,0.2); color: #a855f7; }
+        .pillar-corps { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .pillar-neuro { background: rgba(251,191,36,0.12); color: #fbbf24; }
+
+        /* Action buttons */
+        .action-btn { padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; border: none; cursor: pointer; font-weight: 500; }
+        .action-publish { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .action-publish:hover { background: rgba(34,197,94,0.2); }
+        .action-view { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .action-view:hover { background: rgba(59,130,246,0.2); }
+
+        /* Schedule Section */
+        .schedule-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 2rem; }
+        .schedule-day { background: #1a1229; border: 1px solid rgba(192,132,252,0.08); border-radius: 10px; padding: 1rem 0.75rem; text-align: center; min-height: 120px; }
+        .schedule-day-name { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #5a4f7b; margin-bottom: 0.5rem; }
+        .schedule-day-num { font-size: 1.1rem; font-weight: 700; color: #a89bc2; margin-bottom: 0.75rem; }
+        .schedule-day.today { border-color: #c084fc; }
+        .schedule-day.today .schedule-day-num { color: #c084fc; }
+        .schedule-slot { background: rgba(192,132,252,0.08); border-radius: 6px; padding: 6px 8px; font-size: 0.7rem; color: #a89bc2; margin-bottom: 4px; text-align: left; }
+        .schedule-slot.published { background: rgba(34,197,94,0.1); color: #22c55e; border-left: 2px solid #22c55e; }
+        .schedule-slot.scheduled { background: rgba(59,130,246,0.1); color: #3b82f6; border-left: 2px solid #3b82f6; }
+        .schedule-slot.pending { background: rgba(251,191,36,0.08); color: #fbbf24; border-left: 2px solid #fbbf24; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span>🧠</span> PsychoFaits
+        </div>
+        <a class="nav-item active" href="/dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a class="nav-item" href="/pipeline"><span class="nav-icon">🔄</span> Pipeline</a>
+        <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span> Schedule</a>
+        <a class="nav-item" href="/publish"><span class="nav-icon">🚀</span> Publish</a>
+
+        <div class="nav-section">Content</div>
+        <a class="nav-item"><span class="nav-icon">💡</span> Facts Database</a>
+        <a class="nav-item"><span class="nav-icon">📝</span> Scripts</a>
+        <a class="nav-item"><span class="nav-icon">🎬</span> Videos</a>
+
+        <div class="nav-section">Settings</div>
+        <a class="nav-item"><span class="nav-icon">🔗</span> TikTok Account</a>
+        <a class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+
+        <div class="sidebar-bottom">
+            <div class="user-info">
+                <div class="user-avatar">NF</div>
+                <div>
+                    <div class="user-name">neurofaitsloopz</div>
+                    <div class="user-handle">TikTok Connected ✓</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary">Generate New Fact</button>
+                <a href="/publish" class="btn btn-primary">+ New Video</a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Published This Week</div>
+                <div class="stat-value">12</div>
+                <div class="stat-change stat-up">↑ 2 vs last week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Views (7d)</div>
+                <div class="stat-value">24.3K</div>
+                <div class="stat-change stat-up">↑ 18%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Engagement</div>
+                <div class="stat-value">8.2%</div>
+                <div class="stat-change stat-up">↑ 1.4%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Facts In Queue</div>
+                <div class="stat-value">47</div>
+                <div class="stat-change stat-neutral">Verified & ready</div>
+            </div>
+        </div>
+
+        <!-- Weekly Schedule -->
+        <div class="section-header">
+            <h2>This Week's Schedule</h2>
+        </div>
+        <div class="schedule-grid">
+            <div class="schedule-day">
+                <div class="schedule-day-name">Mon</div>
+                <div class="schedule-day-num">17</div>
+                <div class="schedule-slot published">7:00 — Biais ancrage</div>
+                <div class="schedule-slot published">19:00 — Effet halo</div>
+            </div>
+            <div class="schedule-day">
+                <div class="schedule-day-name">Tue</div>
+                <div class="schedule-day-num">18</div>
+                <div class="schedule-slot published">7:00 — Milgram exp.</div>
+                <div class="schedule-slot published">19:00 — Langage corps</div>
+            </div>
+            <div class="schedule-day">
+                <div class="schedule-day-name">Wed</div>
+                <div class="schedule-day-num">19</div>
+                <div class="schedule-slot published">7:00 — Dark triad</div>
+                <div class="schedule-slot published">19:00 — Biais confirm.</div>
+            </div>
+            <div class="schedule-day today">
+                <div class="schedule-day-name">Thu</div>
+                <div class="schedule-day-num">20</div>
+                <div class="schedule-slot published">7:00 — Effet Dunning</div>
+                <div class="schedule-slot scheduled">19:00 — Manipulation</div>
+            </div>
+            <div class="schedule-day">
+                <div class="schedule-day-name">Fri</div>
+                <div class="schedule-day-num">21</div>
+                <div class="schedule-slot scheduled">7:00 — Neuromythe</div>
+                <div class="schedule-slot pending">19:00 — Biais survie</div>
+            </div>
+            <div class="schedule-day">
+                <div class="schedule-day-name">Sat</div>
+                <div class="schedule-day-num">22</div>
+                <div class="schedule-slot pending">7:00 — Stanford exp.</div>
+                <div class="schedule-slot pending">19:00 — Micro-expr.</div>
+            </div>
+            <div class="schedule-day">
+                <div class="schedule-day-name">Sun</div>
+                <div class="schedule-day-num">23</div>
+                <div class="schedule-slot pending">7:00 — Dissonance cog.</div>
+                <div class="schedule-slot pending">19:00 — Effet spectat.</div>
+            </div>
+        </div>
+
+        <!-- Content Pipeline -->
+        <div class="section-header">
+            <h2>Content Pipeline</h2>
+            <div class="tab-group">
+                <button class="tab active">All</button>
+                <button class="tab">Ready</button>
+                <button class="tab">In Progress</button>
+                <button class="tab">Published</button>
+            </div>
+        </div>
+        <table class="pipeline-table">
+            <thead>
+                <tr>
+                    <th>Fact</th>
+                    <th>Pillar</th>
+                    <th>Template</th>
+                    <th>Status</th>
+                    <th>Scheduled</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>L'effet Dunning-Kruger : pourquoi les incompétents se croient experts</td>
+                    <td><span class="pillar pillar-biais">Biais Cognitif</span></td>
+                    <td>fait_choquant</td>
+                    <td><span class="badge badge-published">Published</span></td>
+                    <td>Mar 20, 7:00</td>
+                    <td><button class="action-btn action-view">View</button></td>
+                </tr>
+                <tr>
+                    <td>Les 3 techniques de manipulation que tout le monde utilise sans le savoir</td>
+                    <td><span class="pillar pillar-sombre">Psycho Sombre</span></td>
+                    <td>manipulation_sombre</td>
+                    <td><span class="badge badge-ready">QA Passed</span></td>
+                    <td>Mar 20, 19:00</td>
+                    <td><a href="/publish" class="action-btn action-publish">Publish →</a></td>
+                </tr>
+                <tr>
+                    <td>Ton cerveau décide 7 secondes avant que tu en sois conscient</td>
+                    <td><span class="pillar pillar-neuro">Neuroscience</span></td>
+                    <td>fait_choquant</td>
+                    <td><span class="badge badge-scripted">Scripted</span></td>
+                    <td>Mar 21, 7:00</td>
+                    <td><button class="action-btn action-view">Preview</button></td>
+                </tr>
+                <tr>
+                    <td>Le biais du survivant : pourquoi on croit aux success stories</td>
+                    <td><span class="pillar pillar-biais">Biais Cognitif</span></td>
+                    <td>biais_nommé</td>
+                    <td><span class="badge badge-producing">Producing</span></td>
+                    <td>Mar 21, 19:00</td>
+                    <td><button class="action-btn action-view">Preview</button></td>
+                </tr>
+                <tr>
+                    <td>L'expérience de Stanford : quand des étudiants deviennent tortionnaires</td>
+                    <td><span class="pillar pillar-sociale">Psycho Sociale</span></td>
+                    <td>expérience</td>
+                    <td><span class="badge badge-scripted">Scripted</span></td>
+                    <td>Mar 22, 7:00</td>
+                    <td><button class="action-btn action-view">Preview</button></td>
+                </tr>
+                <tr>
+                    <td>3 micro-expressions qui trahissent un menteur</td>
+                    <td><span class="pillar pillar-corps">Langage Corporel</span></td>
+                    <td>trois_choses</td>
+                    <td><span class="badge badge-idea">Idea</span></td>
+                    <td>Mar 22, 19:00</td>
+                    <td><button class="action-btn action-view">Edit</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

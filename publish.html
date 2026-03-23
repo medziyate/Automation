@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publish to TikTok — PsychoFaits Content Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0a1a; color: #e0d6f2; min-height: 100vh; }
+
+        /* Sidebar (same as dashboard) */
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #1a1229; border-right: 1px solid rgba(192,132,252,0.1); padding: 1.5rem; display: flex; flex-direction: column; }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; font-weight: 700; color: #c084fc; font-size: 1rem; }
+        .sidebar-logo span { font-size: 1.4rem; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; color: #8b7faa; font-size: 0.9rem; text-decoration: none; margin-bottom: 2px; transition: all 0.15s; cursor: pointer; }
+        .nav-item:hover { background: rgba(192,132,252,0.08); color: #c084fc; }
+        .nav-item.active { background: rgba(192,132,252,0.12); color: #c084fc; }
+        .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #4a3f6b; margin: 1.2rem 0 0.6rem; }
+        .sidebar-bottom { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(192,132,252,0.1); }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #c084fc, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+        .user-name { font-size: 0.85rem; color: #a89bc2; }
+        .user-handle { font-size: 0.75rem; color: #5a4f7b; }
+
+        .main { margin-left: 240px; padding: 2rem; }
+        .header { margin-bottom: 2rem; }
+        .header h1 { font-size: 1.5rem; color: #e0d6f2; margin-bottom: 0.25rem; }
+        .header p { color: #5a4f7b; font-size: 0.9rem; }
+        .breadcrumb { font-size: 0.8rem; color: #5a4f7b; margin-bottom: 0.5rem; }
+        .breadcrumb a { color: #8b7faa; text-decoration: none; }
+
+        .publish-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2rem; }
+
+        /* Left: Video Details */
+        .card { background: #1a1229; border: 1px solid rgba(192,132,252,0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card h3 { font-size: 1rem; color: #c084fc; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.8rem; color: #5a4f7b; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-input { width: 100%; padding: 10px 14px; background: rgba(192,132,252,0.05); border: 1px solid rgba(192,132,252,0.12); border-radius: 8px; color: #e0d6f2; font-size: 0.9rem; font-family: inherit; }
+        .form-input:focus { outline: none; border-color: #c084fc; }
+        textarea.form-input { min-height: 80px; resize: vertical; }
+        .form-hint { font-size: 0.75rem; color: #4a3f6b; margin-top: 0.3rem; }
+
+        /* Right: Phone Preview */
+        .phone-preview { position: sticky; top: 2rem; }
+        .phone-frame { background: #000; border-radius: 28px; padding: 12px; max-width: 280px; margin: 0 auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        .phone-screen { background: #1a1a2e; border-radius: 20px; aspect-ratio: 9/16; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .phone-header { padding: 12px 16px; display: flex; justify-content: space-between; font-size: 0.65rem; color: rgba(255,255,255,0.6); }
+        .phone-content { flex: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a0533, #0f0a1a, #1a1229); }
+        .phone-content-text { padding: 20px; text-align: center; }
+        .phone-content-text .hook { font-size: 1rem; font-weight: 700; color: #fff; line-height: 1.4; margin-bottom: 8px; }
+        .phone-content-text .sub { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+        .phone-bottom { padding: 12px 16px; }
+        .phone-caption { font-size: 0.65rem; color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 6px; }
+        .phone-hashtags { font-size: 0.6rem; color: #c084fc; }
+        .phone-sidebar { position: absolute; right: 10px; bottom: 80px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+        .phone-sidebar-item { text-align: center; }
+        .phone-sidebar-icon { font-size: 1.2rem; }
+        .phone-sidebar-count { font-size: 0.55rem; color: rgba(255,255,255,0.7); }
+        .phone-user { font-size: 0.6rem; color: #fff; font-weight: 600; }
+
+        /* Pipeline steps */
+        .pipeline-steps { display: flex; gap: 0; margin-bottom: 1.5rem; }
+        .pipeline-step { flex: 1; text-align: center; padding: 12px 6px; position: relative; }
+        .pipeline-step::after { content: ''; position: absolute; top: 24px; right: -50%; width: 100%; height: 2px; background: rgba(192,132,252,0.1); z-index: 0; }
+        .pipeline-step:last-child::after { display: none; }
+        .step-num { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; margin-bottom: 4px; position: relative; z-index: 1; }
+        .step-done .step-num { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .step-current .step-num { background: #c084fc; color: #0f0a1a; }
+        .step-pending .step-num { background: rgba(192,132,252,0.08); color: #4a3f6b; }
+        .step-label { font-size: 0.65rem; color: #5a4f7b; }
+        .step-done .step-label { color: #22c55e; }
+        .step-current .step-label { color: #c084fc; }
+
+        /* Publish Button */
+        .publish-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .publish-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(34,197,94,0.3); }
+        .publish-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Success Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #1a1229; border: 1px solid rgba(34,197,94,0.3); border-radius: 16px; padding: 2.5rem; max-width: 440px; text-align: center; animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .modal h2 { color: #22c55e; margin-bottom: 0.5rem; font-size: 1.3rem; }
+        .modal p { color: #8b7faa; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+        .modal-details { background: rgba(34,197,94,0.06); border-radius: 8px; padding: 12px; text-align: left; margin-bottom: 1.5rem; }
+        .modal-detail { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; }
+        .modal-detail-label { color: #5a4f7b; }
+        .modal-detail-value { color: #e0d6f2; font-weight: 500; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { padding: 10px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; text-decoration: none; }
+        .modal-btn-primary { background: #c084fc; color: #0f0a1a; }
+        .modal-btn-secondary { background: rgba(192,132,252,0.1); color: #c084fc; }
+
+        /* API log */
+        .api-log { background: #0a0612; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.75rem; line-height: 1.8; max-height: 200px; overflow-y: auto; }
+        .log-line { color: #5a4f7b; }
+        .log-success { color: #22c55e; }
+        .log-info { color: #3b82f6; }
+        .log-warn { color: #fbbf24; }
+        .log-endpoint { color: #c084fc; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo"><span>🧠</span> PsychoFaits</div>
+        <a class="nav-item" href="/dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a class="nav-item" href="/pipeline"><span class="nav-icon">🔄</span> Pipeline</a>
+        <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span> Schedule</a>
+        <a class="nav-item active" href="/publish"><span class="nav-icon">🚀</span> Publish</a>
+        <div class="nav-section">Content</div>
+        <a class="nav-item"><span class="nav-icon">💡</span> Facts Database</a>
+        <a class="nav-item"><span class="nav-icon">📝</span> Scripts</a>
+        <a class="nav-item"><span class="nav-icon">🎬</span> Videos</a>
+        <div class="nav-section">Settings</div>
+        <a class="nav-item"><span class="nav-icon">🔗</span> TikTok Account</a>
+        <a class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        <div class="sidebar-bottom">
+            <div class="user-info">
+                <div class="user-avatar">NF</div>
+                <div>
+                    <div class="user-name">neurofaitsloopz</div>
+                    <div class="user-handle">TikTok Connected ✓</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="breadcrumb"><a href="/dashboard">Dashboard</a> → Publish to TikTok</div>
+        <div class="header">
+            <h1>Publish to TikTok</h1>
+            <p>Review and publish your video via the Content Posting API</p>
+        </div>
+
+        <!-- Pipeline Progress -->
+        <div class="pipeline-steps">
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">Idea</div></div>
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">Research</div></div>
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">Script</div></div>
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">Voiceover</div></div>
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">Visuals</div></div>
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">Assembly</div></div>
+            <div class="pipeline-step step-done"><div class="step-num">✓</div><div class="step-label">QA Check</div></div>
+            <div class="pipeline-step step-current"><div class="step-num">8</div><div class="step-label">Publish</div></div>
+        </div>
+
+        <div class="publish-layout">
+            <!-- Left Column -->
+            <div>
+                <div class="card">
+                    <h3>Video Details</h3>
+                    <div class="form-group">
+                        <label class="form-label">Fact Title</label>
+                        <input class="form-input" type="text" value="Les 3 techniques de manipulation que tout le monde utilise sans le savoir" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hook Text</label>
+                        <input class="form-input" type="text" value="Tu manipules les gens tous les jours... et tu ne le sais même pas 🧠" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Caption</label>
+                        <textarea class="form-input" readonly>Tu utilises ces 3 techniques de manipulation TOUS LES JOURS sans t'en rendre compte... La 3ème va te choquer 🧠🔥</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hashtags</label>
+                        <input class="form-input" type="text" value="#psychologie #manipulation #faitpsycho #cerveau #psychofaits #darkpsychology #biais #savoirinutile" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Template</label>
+                        <input class="form-input" type="text" value="manipulation_sombre" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pillar</label>
+                        <input class="form-input" type="text" value="Psychologie Sombre" readonly>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Publishing Settings</h3>
+                    <div class="form-group">
+                        <label class="form-label">Target Account</label>
+                        <input class="form-input" type="text" value="@neurofaitsloopz (TikTok Business Account)" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Publish Method</label>
+                        <input class="form-input" type="text" value="TikTok Content Posting API (video.publish)" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Schedule</label>
+                        <input class="form-input" type="text" value="Today, 19:00 CET" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Privacy Level</label>
+                        <input class="form-input" type="text" value="Public" readonly>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>QA Compliance Check — Passed ✓</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem;">
+                        <div style="color: #22c55e;">✓ No medical claims</div>
+                        <div style="color: #22c55e;">✓ No dangerous advice</div>
+                        <div style="color: #22c55e;">✓ No copyrighted material</div>
+                        <div style="color: #22c55e;">✓ No offensive content</div>
+                        <div style="color: #22c55e;">✓ TikTok policy compliant</div>
+                        <div style="color: #22c55e;">✓ Source verified</div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 8px 12px; background: rgba(34,197,94,0.06); border-radius: 6px; font-size: 0.8rem; color: #22c55e;">
+                        Risk Level: LOW — Safe to publish
+                    </div>
+                </div>
+
+                <!-- Publish Button -->
+                <button class="publish-btn" id="publishBtn" onclick="startPublish()">
+                    🚀 Publish to TikTok Now
+                </button>
+
+                <!-- API Log -->
+                <div class="card" style="margin-top: 1.5rem;" id="apiLogCard" hidden>
+                    <h3>API Activity Log</h3>
+                    <div class="api-log" id="apiLog"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Phone Preview -->
+            <div class="phone-preview">
+                <div class="card" style="background: transparent; border: none; padding: 0;">
+                    <h3 style="color: #c084fc; font-size: 1rem; margin-bottom: 1rem; text-align: center;">TikTok Preview</h3>
+                </div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="phone-header">
+                            <span>19:00</span>
+                            <span>Pour toi</span>
+                            <span>🔍</span>
+                        </div>
+                        <div class="phone-content">
+                            <div class="phone-content-text">
+                                <div class="hook">Tu manipules les gens tous les jours...<br>et tu ne le sais même pas 🧠</div>
+                                <div class="sub">▶ 0:00 / 0:42</div>
+                            </div>
+                        </div>
+                        <div class="phone-sidebar">
+                            <div class="phone-sidebar-item">
+                                <div class="phone-sidebar-icon">❤️</div>
+                                <div class="phone-sidebar-count">—</div>
+                            </div>
+                            <div class="phone-sidebar-item">
+                                <div class="phone-sidebar-icon">💬</div>
+                                <div class="phone-sidebar-count">—</div>
+                            </div>
+                            <div class="phone-sidebar-item">
+                                <div class="phone-sidebar-icon">↗️</div>
+                                <div class="phone-sidebar-count">—</div>
+                            </div>
+                            <div class="phone-sidebar-item">
+                                <div class="phone-sidebar-icon">🔖</div>
+                                <div class="phone-sidebar-count">—</div>
+                            </div>
+                        </div>
+                        <div class="phone-bottom">
+                            <div class="phone-user">@neurofaitsloopz</div>
+                            <div class="phone-caption">Tu utilises ces 3 techniques de manipulation TOUS LES JOURS sans t'en rendre compte... 🧠🔥</div>
+                            <div class="phone-hashtags">#psychologie #manipulation #faitpsycho #cerveau</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-icon">🎉</div>
+            <h2>Successfully Published!</h2>
+            <p>Your video has been published to TikTok via the Content Posting API.</p>
+            <div class="modal-details">
+                <div class="modal-detail">
+                    <span class="modal-detail-label">Account</span>
+                    <span class="modal-detail-value">@neurofaitsloopz</span>
+                </div>
+                <div class="modal-detail">
+                    <span class="modal-detail-label">API Method</span>
+                    <span class="modal-detail-value">POST /v2/post/publish/video/</span>
+                </div>
+                <div class="modal-detail">
+                    <span class="modal-detail-label">Scope Used</span>
+                    <span class="modal-detail-value">video.publish</span>
+                </div>
+                <div class="modal-detail">
+                    <span class="modal-detail-label">Status</span>
+                    <span class="modal-detail-value" style="color: #22c55e;">200 OK — Published</span>
+                </div>
+                <div class="modal-detail">
+                    <span class="modal-detail-label">Publish ID</span>
+                    <span class="modal-detail-value" style="font-family: monospace; font-size: 0.8rem;">pv_8f3k2j1m9x7n5</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <a href="/dashboard" class="modal-btn modal-btn-primary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startPublish() {
+            const btn = document.getElementById('publishBtn');
+            const logCard = document.getElementById('apiLogCard');
+            const log = document.getElementById('apiLog');
+
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Publishing...';
+            logCard.hidden = false;
+            log.innerHTML = '';
+
+            const logs = [
+                { text: '[19:00:01] Initiating TikTok Content Posting API...', cls: 'log-info', delay: 400 },
+                { text: '[19:00:01] POST https://open.tiktokapis.com/v2/post/publish/video/init/', cls: 'log-endpoint', delay: 900 },
+                { text: '[19:00:02] Authorization: Bearer ****_access_token', cls: 'log-line', delay: 1400 },
+                { text: '[19:00:02] Scope: video.publish', cls: 'log-line', delay: 1700 },
+                { text: '[19:00:02] Content-Type: application/json', cls: 'log-line', delay: 1900 },
+                { text: '[19:00:03] Uploading video file (12.4 MB)...', cls: 'log-info', delay: 2500 },
+                { text: '[19:00:05] Upload progress: 100%', cls: 'log-info', delay: 3800 },
+                { text: '[19:00:06] POST https://open.tiktokapis.com/v2/post/publish/status/fetch/', cls: 'log-endpoint', delay: 4500 },
+                { text: '[19:00:07] Response: { "data": { "status": "PUBLISH_COMPLETE" } }', cls: 'log-success', delay: 5500 },
+                { text: '[19:00:07] ✓ Video published successfully to @neurofaitsloopz', cls: 'log-success', delay: 6200 },
+                { text: '[19:00:07] ✓ Airtable record updated — status: "publié"', cls: 'log-success', delay: 6800 },
+                { text: '[19:00:08] ✓ Telegram notification sent', cls: 'log-success', delay: 7300 },
+            ];
+
+            logs.forEach(entry => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'log-line ' + entry.cls;
+                    line.textContent = entry.text;
+                    log.appendChild(line);
+                    log.scrollTop = log.scrollHeight;
+                }, entry.delay);
+            });
+
+            setTimeout(() => {
+                btn.innerHTML = '✓ Published Successfully';
+                btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                document.getElementById('successModal').classList.add('show');
+            }, 8000);
+        }
+    </script>
+</body>
+</html>

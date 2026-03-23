@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Pipeline — PsychoFaits Content Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0a1a; color: #e0d6f2; min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #1a1229; border-right: 1px solid rgba(192,132,252,0.1); padding: 1.5rem; display: flex; flex-direction: column; }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; font-weight: 700; color: #c084fc; font-size: 1rem; }
+        .sidebar-logo span { font-size: 1.4rem; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; color: #8b7faa; font-size: 0.9rem; text-decoration: none; margin-bottom: 2px; transition: all 0.15s; cursor: pointer; }
+        .nav-item:hover { background: rgba(192,132,252,0.08); color: #c084fc; }
+        .nav-item.active { background: rgba(192,132,252,0.12); color: #c084fc; }
+        .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+        .nav-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #4a3f6b; margin: 1.2rem 0 0.6rem; }
+        .sidebar-bottom { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(192,132,252,0.1); }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #c084fc, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+        .user-name { font-size: 0.85rem; color: #a89bc2; }
+        .user-handle { font-size: 0.75rem; color: #5a4f7b; }
+
+        .main { margin-left: 240px; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.5rem; color: #e0d6f2; }
+        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; text-decoration: none; }
+        .btn-primary { background: #c084fc; color: #0f0a1a; }
+
+        /* Kanban Board */
+        .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .kanban-col { background: rgba(192,132,252,0.03); border: 1px solid rgba(192,132,252,0.06); border-radius: 12px; padding: 1rem; min-height: 500px; }
+        .kanban-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(192,132,252,0.08); }
+        .kanban-title { font-size: 0.85rem; font-weight: 600; }
+        .kanban-count { font-size: 0.75rem; background: rgba(192,132,252,0.1); color: #c084fc; padding: 2px 8px; border-radius: 10px; }
+
+        .kanban-card { background: #1a1229; border: 1px solid rgba(192,132,252,0.1); border-radius: 10px; padding: 1rem; margin-bottom: 10px; cursor: grab; transition: all 0.15s; }
+        .kanban-card:hover { border-color: rgba(192,132,252,0.25); transform: translateY(-1px); }
+        .kanban-card-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; line-height: 1.4; }
+        .kanban-card-meta { display: flex; justify-content: space-between; align-items: center; }
+        .pillar { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; }
+        .pillar-biais { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .pillar-sociale { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .pillar-sombre { background: rgba(107,33,168,0.2); color: #a855f7; }
+        .pillar-corps { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .pillar-neuro { background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .kanban-date { font-size: 0.7rem; color: #4a3f6b; }
+
+        .col-idea .kanban-header { border-color: rgba(107,114,128,0.3); }
+        .col-idea .kanban-title { color: #6b7280; }
+        .col-script .kanban-header { border-color: rgba(192,132,252,0.3); }
+        .col-script .kanban-title { color: #c084fc; }
+        .col-produce .kanban-header { border-color: rgba(251,191,36,0.3); }
+        .col-produce .kanban-title { color: #fbbf24; }
+        .col-ready .kanban-header { border-color: rgba(34,197,94,0.3); }
+        .col-ready .kanban-title { color: #22c55e; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-logo"><span>🧠</span> PsychoFaits</div>
+        <a class="nav-item" href="/dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a class="nav-item active" href="/pipeline"><span class="nav-icon">🔄</span> Pipeline</a>
+        <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span> Schedule</a>
+        <a class="nav-item" href="/publish"><span class="nav-icon">🚀</span> Publish</a>
+        <div class="nav-section">Content</div>
+        <a class="nav-item"><span class="nav-icon">💡</span> Facts Database</a>
+        <a class="nav-item"><span class="nav-icon">📝</span> Scripts</a>
+        <a class="nav-item"><span class="nav-icon">🎬</span> Videos</a>
+        <div class="nav-section">Settings</div>
+        <a class="nav-item"><span class="nav-icon">🔗</span> TikTok Account</a>
+        <a class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        <div class="sidebar-bottom">
+            <div class="user-info">
+                <div class="user-avatar">NF</div>
+                <div>
+                    <div class="user-name">neurofaitsloopz</div>
+                    <div class="user-handle">TikTok Connected ✓</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main">
+        <div class="header">
+            <h1>Content Pipeline</h1>
+            <button class="btn btn-primary">+ Generate New Fact</button>
+        </div>
+
+        <div class="kanban">
+            <!-- Ideas Column -->
+            <div class="kanban-col col-idea">
+                <div class="kanban-header">
+                    <span class="kanban-title">💡 Ideas</span>
+                    <span class="kanban-count">4</span>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">La dissonance cognitive : pourquoi tu continues de fumer en sachant que c'est dangereux</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-biais">Biais Cognitif</span>
+                        <span class="kanban-date">Mar 23</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">L'effet spectateur : pourquoi personne n'appelle les secours</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-sociale">Psycho Sociale</span>
+                        <span class="kanban-date">Mar 23</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">Comment les narcissiques utilisent le love bombing</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-sombre">Psycho Sombre</span>
+                        <span class="kanban-date">Mar 24</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">5 signes que quelqu'un est nerveux (langage corporel)</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-corps">Langage Corporel</span>
+                        <span class="kanban-date">Mar 24</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scripted Column -->
+            <div class="kanban-col col-script">
+                <div class="kanban-header">
+                    <span class="kanban-title">📝 Scripted</span>
+                    <span class="kanban-count">3</span>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">Ton cerveau décide 7 secondes avant que tu en sois conscient</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-neuro">Neuroscience</span>
+                        <span class="kanban-date">Mar 21</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">L'expérience de Stanford : étudiants devenus tortionnaires</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-sociale">Psycho Sociale</span>
+                        <span class="kanban-date">Mar 22</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">Le biais du survivant : pourquoi on croit aux success stories</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-biais">Biais Cognitif</span>
+                        <span class="kanban-date">Mar 22</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Producing Column -->
+            <div class="kanban-col col-produce">
+                <div class="kanban-header">
+                    <span class="kanban-title">🎬 Producing</span>
+                    <span class="kanban-count">2</span>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">3 micro-expressions qui trahissent un menteur</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-corps">Langage Corporel</span>
+                        <span class="kanban-date">Mar 22</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">Pourquoi ton cerveau adore les théories du complot</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-neuro">Neuroscience</span>
+                        <span class="kanban-date">Mar 23</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ready to Publish Column -->
+            <div class="kanban-col col-ready">
+                <div class="kanban-header">
+                    <span class="kanban-title">🚀 Ready to Publish</span>
+                    <span class="kanban-count">2</span>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">Les 3 techniques de manipulation que tout le monde utilise</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-sombre">Psycho Sombre</span>
+                        <span class="kanban-date">Today 19:00</span>
+                    </div>
+                </div>
+                <div class="kanban-card">
+                    <div class="kanban-card-title">L'effet Barnum : pourquoi tu crois à l'astrologie</div>
+                    <div class="kanban-card-meta">
+                        <span class="pillar pillar-biais">Biais Cognitif</span>
+                        <span class="kanban-date">Tomorrow 7:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
